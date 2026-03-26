@@ -30,17 +30,11 @@ nslookup "$DOMAIN" > "nslookup.txt"
 echo "[+] Running whatweb..."
 whatweb "https://$DOMAIN" > "whatweb.txt"
 
-# Subfinder for subdomains
-echo "[+] Running subfinder..."
-subfinder -all -silent -d "$DOMAIN" -o "subfinder.txt"
-
-# Subfinder with httpx for live hosts
-echo "[+] Running subfinder with httpx..."
-subfinder -all -silent -d "$DOMAIN" | httpx -silent > "subfinder_live.txt"
-
 # Subfinder with httpx and katana
 echo "[+] Running subfinder with httpx and katana..."
-subfinder -all -silent -d "$DOMAIN" | httpx -silent | katana -f ufile > "katana.txt"
+subfinder -all -silent -d "$DOMAIN" | httpx -silent > "temp_urls.txt"
+katana -list temp_urls.txt -o "katana.txt"
+rm temp_urls.txt
 
 # WAFW00F
 echo "[+] Running wafw00f..."
