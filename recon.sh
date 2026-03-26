@@ -32,7 +32,7 @@ whatweb "https://$DOMAIN" > "whatweb.txt"
 
 # Subfinder with httpx and katana
 echo "[+] Running subfinder with httpx and katana..."
-subfinder -all -silent -d "$DOMAIN" | httpx -silent > "temp_urls.txt"
+subfinder -all -d "$DOMAIN" | httpx "$DOMAIN" > "temp_urls.txt"
 katana -list temp_urls.txt -o "katana.txt"
 rm temp_urls.txt
 
