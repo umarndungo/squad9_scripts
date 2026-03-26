@@ -26,10 +26,6 @@ whois "$DOMAIN" > "whois.txt"
 echo "[+] Running nslookup..."
 nslookup "$DOMAIN" > "nslookup.txt"
 
-# DNSEnum
-echo "[+] Running dnsenum..."
-dnsenum "$DOMAIN" > "dnsenum.txt" 2>&1
-
 # WhatWeb
 echo "[+] Running whatweb..."
 whatweb "https://$DOMAIN" > "whatweb.txt"
@@ -61,6 +57,10 @@ wpscan --random-user-agent --url "https://$DOMAIN" > "wpscan.txt" 2>&1
 # Gobuster directory enumeration
 echo "[+] Running gobuster..."
 gobuster dir -u "https://$DOMAIN" -w /usr/share/wordlists/dirb/common.txt --no-error > "gobuster.txt"
+
+# DNSEnum
+echo "[+] Running dnsenum..."
+dnsenum "$DOMAIN" > "dnsenum.txt" 2>&1
 
 echo "========================================="
 echo "[+] Reconnaissance completed!"
