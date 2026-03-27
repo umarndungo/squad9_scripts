@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 # enhanced_recon_secrets.sh – Multi‑tool passive recon + secrets discovery
 # Usage: ./enhanced_recon_secrets.sh target.com [output_directory]
 
@@ -31,7 +31,7 @@ NUCLEI_TAGS="exposures,secrets"
 
 # Nmap scan profile (adjust as needed)
 NMAP_PORTS="80,443,8080,8443,3000,5000,7000,8000"  # common web ports
-NMAP_FLAGS="-sV --open -T4 -Pn"
+NMAP_FLAGS="-sV -sS -sC --open -T4 -Pn"
 
 # --- Functions -----------------------------------------------------
 log() {
@@ -99,10 +99,10 @@ log "Output will be stored in $OUTPUT_DIR"
 
 # ----- Step 1: Subdomain enumeration (Subfinder + Amass) ----------
 log "Step 1a: Running Subfinder..."
-$SUBFINDER -d "$TARGET" -silent -o "${OUTPUT_DIR}/subfinder_domains.txt"
+subfinder -d "$TARGET" -silent -o "${OUTPUT_DIR}/subfinder_domains.txt"
 
 log "Step 1b: Running Amass (passive mode)..."
-$AMASS enum -passive -d "$TARGET" -o "${OUTPUT_DIR}/amass_domains.txt"
+amass enum -passive -d "$TARGET" -o "${OUTPUT_DIR}/amass_domains.txt"
 
 # Combine and deduplicate subdomains
 cat "${OUTPUT_DIR}/subfinder_domains.txt" "${OUTPUT_DIR}/amass_domains.txt" \
@@ -112,7 +112,7 @@ log "Total unique subdomains found: $sub_count"
 
 # ----- Step 2: Filter live subdomains -----------------------------
 log "Step 2: Filtering live subdomains with httpx..."
-$HTTPX -l "${OUTPUT_DIR}/all_subdomains.txt" -silent \
+httpx -l "${OUTPUT_DIR}/all_subdomains.txt" -silent \
     -status-code -mc "$LIVE_STATUS_CODES" \
     -o "${OUTPUT_DIR}/live_domains.txt"
 live_count=$(wc -l < "${OUTPUT_DIR}/live_domains.txt")

@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 # install_recon_tools.sh – Install missing recon tools for bug bounty
 # Usage: ./install_recon_tools.sh
 
