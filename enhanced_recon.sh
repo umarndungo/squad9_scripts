@@ -99,9 +99,11 @@ log "Output will be stored in $OUTPUT_DIR"
 
 # ----- Step 1: Subdomain enumeration (Subfinder + Amass) ----------
 log "Step 1a: Running Subfinder..."
+touch "${OUTPUT_DIR}/subfinder_domains.txt"
 subfinder -d "$TARGET" -silent -o "${OUTPUT_DIR}/subfinder_domains.txt"
 
 log "Step 1b: Running Amass (passive mode)..."
+touch "${OUTPUT_DIR}/amass_domains.txt"
 amass enum -passive -d "$TARGET" -o "${OUTPUT_DIR}/amass_domains.txt"
 
 # Combine and deduplicate subdomains
@@ -112,7 +114,8 @@ log "Total unique subdomains found: $sub_count"
 
 # ----- Step 2: Filter live subdomains -----------------------------
 log "Step 2: Filtering live subdomains with httpx..."
-httpx -l "${OUTPUT_DIR}/all_subdomains.txt" -silent \
+httpxgo="/home/chiefomar/go/bin/httpx"
+$httpxgo -l "${OUTPUT_DIR}/all_subdomains.txt" -silent \
     -status-code -mc "$LIVE_STATUS_CODES" \
     -o "${OUTPUT_DIR}/live_domains.txt"
 live_count=$(wc -l < "${OUTPUT_DIR}/live_domains.txt")
@@ -139,6 +142,7 @@ while IFS= read -r domain; do
 done < "${OUTPUT_DIR}/live_domains.txt"
 
 log "Step 3d: Fingerprinting web technologies with whatweb..."
+touch "${OUTPUT_DIR}/whatweb.txt"
 while IFS= read -r domain; do
     log "  Analyzing $domain..."
     $WHATWEB --no-errors --color=never "$domain" >> "${OUTPUT_DIR}/whatweb.txt" 2>/dev/null || \
@@ -146,6 +150,7 @@ while IFS= read -r domain; do
 done < "${OUTPUT_DIR}/live_domains.txt"
 
 log "Step 3e: Detecting WAFs with wafw00f..."
+touch "${OUTPUT_DIR}/wafw00f.txt"
 while IFS= read -r domain; do
     log "  Testing $domain..."
     $WAFW00F "$domain" >> "${OUTPUT_DIR}/wafw00f.txt" 2>/dev/null || \
@@ -154,6 +159,7 @@ done < "${OUTPUT_DIR}/live_domains.txt"
 
 # ----- Step 4: WordPress scanning (if WordPress detected) ----------
 log "Step 4: Checking for WordPress installations..."
+touch "${OUTPUT_DIR}/wordpress_domains.txt"
 # If whatweb output contains "WordPress", run wpscan on those domains
 grep -i "WordPress" "${OUTPUT_DIR}/whatweb.txt" | cut -d' ' -f1 | sort -u > "${OUTPUT_DIR}/wordpress_domains.txt" 2>/dev/null || true
 if [ -s "${OUTPUT_DIR}/wordpress_domains.txt" ]; then
@@ -175,16 +181,19 @@ fi
 
 # ----- Step 5: Collect URLs from multiple sources -----------------
 log "Step 5a: Crawling live domains with Katana..."
+touch "${OUTPUT_DIR}/katana_urls.txt"
 $KATANA -list "${OUTPUT_DIR}/live_domains.txt" -silent \
     -o "${OUTPUT_DIR}/katana_urls.txt" \
     -jc -fx -d 3
 
 log "Step 5b: Fetching historical URLs with waybackurls..."
+touch "${OUTPUT_DIR}/wayback_urls.txt"
 while IFS= read -r domain; do
     echo "$domain" | $WAYBACKURLS >> "${OUTPUT_DIR}/wayback_urls.txt"
 done < "${OUTPUT_DIR}/live_domains.txt"
 
 log "Step 5c: Fetching historical URLs with gau..."
+touch "${OUTPUT_DIR}/gau_urls.txt"
 while IFS= read -r domain; do
     $GAU "$domain" >> "${OUTPUT_DIR}/gau_urls.txt"
 done < "${OUTPUT_DIR}/live_domains.txt"
@@ -210,6 +219,7 @@ fi
 
 # ----- Step 7: Scan JS files with Nuclei --------------------------
 log "Step 7: Scanning JS files with Nuclei (tags: $NUCLEI_TAGS)..."
+touch "${OUTPUT_DIR}/nuclei_findings.txt"
 $NUCLEI -l "${OUTPUT_DIR}/js_files.txt" -silent \
     -tags "$NUCLEI_TAGS" \
     -o "${OUTPUT_DIR}/nuclei_findings.txt"
