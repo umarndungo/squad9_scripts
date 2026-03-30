@@ -159,6 +159,10 @@ while IFS= read -r domain; do
         log "  wafw00f failed for $domain"
 done < "${OUTPUT_DIR}/live_domains.txt"
 
+log "Step 3f: directory discovery with gobuster..."
+touch "gobuster.txt"
+gobuster dir -u "https:$domain" -w /usr/share/wordlists/dirb/common.txt --no-error -b 301 | tee -a gobuster.txt
+
 # ----- Step 4: WordPress scanning (if WordPress detected) ----------
 log "Step 4: Checking for WordPress installations..."
 touch "${OUTPUT_DIR}/wordpress_domains.txt"
