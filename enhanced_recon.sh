@@ -114,8 +114,10 @@ log "Total unique subdomains found: $sub_count"
 
 # ----- Step 2: Filter live subdomains -----------------------------
 log "Step 2: Filtering live subdomains with httpx..."
-httpxgo="/home/chiefomar/go/bin/httpx"
-$httpxgo -l "${OUTPUT_DIR}/all_subdomains.txt" -silent \
+# Uncomment this below and comment out the custom path below it:
+httpxgo="$HOME/go/bin/httpx"
+# httpxgo="/home/chiefomar/go/bin/httpx"
+$httpxgo -list "${OUTPUT_DIR}/all_subdomains.txt" -silent \
     -status-code -mc "$LIVE_STATUS_CODES" \
     -o "${OUTPUT_DIR}/live_domains.txt"
 live_count=$(wc -l < "${OUTPUT_DIR}/live_domains.txt")
@@ -153,7 +155,7 @@ log "Step 3e: Detecting WAFs with wafw00f..."
 touch "${OUTPUT_DIR}/wafw00f.txt"
 while IFS= read -r domain; do
     log "  Testing $domain..."
-    $WAFW00F "$domain" >> "${OUTPUT_DIR}/wafw00f.txt" 2>/dev/null || \
+    $WAFW00F -a -l "$domain" | tee -a "${OUTPUT_DIR}/wafw00f.txt" 2>/dev/null || \
         log "  wafw00f failed for $domain"
 done < "${OUTPUT_DIR}/live_domains.txt"
 
@@ -166,12 +168,12 @@ if [ -s "${OUTPUT_DIR}/wordpress_domains.txt" ]; then
     log "WordPress detected on $(wc -l < "${OUTPUT_DIR}/wordpress_domains.txt") domains. Running wpscan..."
     while IFS= read -r domain; do
         log "  Scanning $domain with wpscan..."
-        $WPSCAN --url "http://$domain" --no-update --enumerate --disable-tls-checks \
+        $WPSCAN --random-user-agent --url "http://$domain" --no-update --enumerate --disable-tls-checks \
             -o "${OUTPUT_DIR}/wpscan_${domain//[^a-zA-Z0-9]/_}.txt" 2>/dev/null || \
             log "  wpscan failed for $domain"
         # Also try HTTPS if it exists
         if [ -f "${OUTPUT_DIR}/nmap_${domain//[^a-zA-Z0-9]/_}.txt" ] && grep -q "443/open" "${OUTPUT_DIR}/nmap_${domain//[^a-zA-Z0-9]/_}.txt"; then
-            $WPSCAN --url "https://$domain" --no-update --enumerate --disable-tls-checks \
+            $WPSCAN --random-user-agent --url "https://$domain" --no-update --enumerate --disable-tls-checks \
                 -o "${OUTPUT_DIR}/wpscan_https_${domain//[^a-zA-Z0-9]/_}.txt" 2>/dev/null || true
         fi
     done < "${OUTPUT_DIR}/wordpress_domains.txt"
@@ -198,8 +200,16 @@ while IFS= read -r domain; do
     $GAU "$domain" >> "${OUTPUT_DIR}/gau_urls.txt"
 done < "${OUTPUT_DIR}/live_domains.txt"
 
+log "Step 5ci: Fetching historical URLs with getallurls..."
+touch "${OUTPUT_DIR}/gau_urls.txt"
+while IFS= read -r domain; do
+    getallurls "$domain" >> "${OUTPUT_DIR}/gau_urls.txt"
+done < "${OUTPUT_DIR}/live_domains.txt"
+
+
 # Combine all URLs, deduplicate
 cat "${OUTPUT_DIR}/katana_urls.txt" \
+    "${OUTPUT_DIR}/all_subdomains.txt" \
     "${OUTPUT_DIR}/wayback_urls.txt" \
     "${OUTPUT_DIR}/gau_urls.txt" 2>/dev/null \
     | sort -u > "${OUTPUT_DIR}/all_urls.txt"
