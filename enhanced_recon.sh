@@ -94,6 +94,7 @@ if [ -z "$TARGET" ]; then
 fi
 
 mkdir -p "$OUTPUT_DIR"
+echo "$OUTPUT_DIR" >> ".gitignore"
 log "Starting enhanced reconnaissance for $TARGET"
 log "Output will be stored in $OUTPUT_DIR"
 
