@@ -105,7 +105,7 @@ subfinder -d "$TARGET" -silent -o "${OUTPUT_DIR}/subfinder_domains.txt"
 
 log "Step 1b: Running Amass (passive mode)..."
 touch "${OUTPUT_DIR}/amass_domains.txt"
-amass enum -passive -d "$TARGET" -o "${OUTPUT_DIR}/amass_domains.txt"
+#amass enum -passive -d "$TARGET" -o "${OUTPUT_DIR}/amass_domains.txt"
 
 # Combine and deduplicate subdomains
 cat "${OUTPUT_DIR}/subfinder_domains.txt" "${OUTPUT_DIR}/amass_domains.txt" \
@@ -162,7 +162,7 @@ done < "${OUTPUT_DIR}/live_domains.txt"
 
 log "Step 3f: directory discovery with gobuster..."
 touch "gobuster.txt"
-gobuster dir -u "https:$domain" -w /usr/share/wordlists/dirb/common.txt --no-error -b 301 | tee -a gobuster.txt
+#gobuster dir -u "https://$TARGET" -w /usr/share/wordlists/dirb/common.txt --no-error -b 301 | tee -a gobuster.txt
 
 # ----- Step 4: WordPress scanning (if WordPress detected) ----------
 log "Step 4: Checking for WordPress installations..."
